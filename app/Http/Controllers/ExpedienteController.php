@@ -3,56 +3,60 @@
 namespace App\Http\Controllers;
 
 use App\Models\Expediente;
+use App\Models\Persona;
+use App\Models\Procedencia;
+use App\Models\Infraccion;
 use Illuminate\Http\Request;
 
 class ExpedienteController extends Controller
 {
     public function index()
     {
-        $expedientes = Expediente::all();
+        $expedientes = Expediente::with('persona', 'procedencia', 'infraccion')->get();
         return view('expedientes.index', compact('expedientes'));
     }
 
     public function show(Expediente $expediente)
     {
-        return view('reportes', compact('expediente'));
+        return view('expedientes.show', compact('expediente'));
     }
 
     public function create()
     {
+        $personas = Persona::all();
+        $procedencias = Procedencia::all();
+        $infracciones = Infraccion::all();
         $numero_expediente = $this->generateExpedienteNumber();
 
-        return view('expedientes.create', compact('numero_expediente'));
+
+
+        return view('expedientes.create', compact('personas', 'procedencias', 'infracciones', 'numero_expediente'));
     }
 
     public function store(Request $request)
     {
         // Validación de los datos del formulario
         $request->validate([
-            'apellidos_deudor' => 'required|string|max:255',
-            'nombres_deudor' => 'required|string|max:255',
-            'dni_ruc' => 'required|string|max:20',
+            'ID_persona' => 'required|exists:personas,ID_persona',
             'direccion_predio' => 'required|string|max:255',
-            'domicilio_deudor' => 'required|string|max:255',
-            'procedencia' => 'required|string|max:255',
-            'fecha_notificacion' => 'required|date',
-            'infraccion' => 'required|string|max:255',
-            'monto_adeudado' => 'required|numeric',
+            'ID_procedencia' => 'required|exists:procedencias,ID_procedencia',
+            'fecha_entrada' => 'required|date',
+            'fecha_notificacion' => 'nullable|date',
+            'ID_infraccion' => 'required|exists:infracciones,ID_infraccion',
+            'estado' => 'nullable|string|in:REC,REEF,RC,RSEC', // Asegúrate de permitir nulo
             'medida_complementaria' => 'nullable|string|max:255',
         ]);
 
         // Creación del expediente
         Expediente::create([
-            'numero_expediente' => $request->numero_expediente,
-            'apellidos_deudor' => $request->apellidos_deudor,
-            'nombres_deudor' => $request->nombres_deudor,
-            'dni_ruc' => $request->dni_ruc,
+            'numero' => $this->generateExpedienteNumber(),
+            'ID_persona' => $request->ID_persona,
             'direccion_predio' => $request->direccion_predio,
-            'domicilio_deudor' => $request->domicilio_deudor,
-            'procedencia' => $request->procedencia,
+            'ID_procedencia' => $request->ID_procedencia,
+            'fecha_entrada' => $request->fecha_entrada,
             'fecha_notificacion' => $request->fecha_notificacion,
-            'infraccion' => $request->infraccion,
-            'monto_adeudado' => $request->monto_adeudado,
+            'ID_infraccion' => $request->ID_infraccion,
+            'estado' => $request->estado ?? 'REC', // Establece 'REC' por defecto si no se proporciona
             'medida_complementaria' => $request->medida_complementaria,
         ]);
 
@@ -60,67 +64,49 @@ class ExpedienteController extends Controller
         return redirect()->route('expedientes.index')->with('success', 'Expediente creado exitosamente.');
     }
 
+    
     private function generateExpedienteNumber()
     {
         // Obtén el último expediente creado
-        $lastExpediente = Expediente::orderBy('id', 'desc')->first();
-
+        $lastExpediente = Expediente::orderBy('id_expediente', 'desc')->first();
+    
         // Incrementa el número de expediente
         if ($lastExpediente) {
-            $lastNumber = intval(substr($lastExpediente->numero_expediente, 0, 4));
+            // Extrae el número secuencial del último expediente
+            $lastNumber = intval(substr($lastExpediente->numero, 0, 4));
             $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
         } else {
+            // Si no hay expedientes, empieza con el número 0001
             $newNumber = '0001';
         }
-
-        // Genera el nuevo número de expediente
+    
+        // Genera el nuevo número de expediente con el año actual y sufijo
         $currentYear = date('Y');
         return "{$newNumber}-{$currentYear}-OEC";
     }
-
-    public function editEstado($id)
-    {
-        $expediente = Expediente::findOrFail($id);
-        return view('expedientes.edit_estado', compact('expediente'));
-    }
-
-    // Función para actualizar el estado del expediente
-    public function updateEstado(Request $request, $id)
-    {
-        $request->validate([
-            'estado' => 'required|string|in:REC,REEF,RC,RSEC',
-            'fecha_notificacion' => 'required|date',
-            'recibos' => 'nullable|string|max:255',
-        ]);
-
-        $expediente = Expediente::findOrFail($id);
-        $expediente->estado = $request->estado;
-        $expediente->fecha_notificacion = $request->fecha_notificacion;
-        $expediente->recibos = $request->recibos;
-        $expediente->save();
-
-        return redirect()->route('expedientes.index')->with('success', 'Estado del expediente actualizado con éxito');
-    }
+    
+    
 
     public function edit($id)
     {
         $expediente = Expediente::findOrFail($id);
-        return view('expedientes.edit', compact('expediente'));
+        $personas = Persona::all();
+        $procedencias = Procedencia::all();
+        $infracciones = Infraccion::all();
+
+        return view('expedientes.edit', compact('expediente', 'personas', 'procedencias', 'infracciones'));
     }
 
-    // Función para actualizar los datos del expediente
     public function update(Request $request, $id)
     {
         $request->validate([
-            'apellidos_deudor' => 'required|string|max:255',
-            'nombres_deudor' => 'required|string|max:255',
-            'dni_ruc' => 'required|string|max:20',
+            'ID_persona' => 'required|exists:personas,ID_persona',
             'direccion_predio' => 'required|string|max:255',
-            'domicilio_deudor' => 'required|string|max:255',
-            'procedencia' => 'required|string|max:255',
-            'fecha_notificacion' => 'required|date',
-            'infraccion' => 'required|string|max:255',
-            'monto_adeudado' => 'required|numeric',
+            'ID_procedencia' => 'required|exists:procedencias,ID_procedencia',
+            'fecha_entrada' => 'required|date',
+            'fecha_notificacion' => 'nullable|date',
+            'ID_infraccion' => 'required|exists:infracciones,ID_infraccion',
+            'estado' => 'required|string|in:REC,REEF,RC,RSEC',
             'medida_complementaria' => 'nullable|string|max:255',
         ]);
 
@@ -130,12 +116,32 @@ class ExpedienteController extends Controller
         return redirect()->route('expedientes.index')->with('success', 'Expediente actualizado con éxito');
     }
 
-    public function edit_estado($id)
-{
-    $expediente = Expediente::findOrFail($id);
-    return view('expedientes.edit_estado', compact('expediente'));
-}
+    public function editEstado($id)
+    {
+        $expediente = Expediente::findOrFail($id);
+        $comprobantes = $expediente->comprobantes; // Asegúrate de que la relación esté definida en el modelo Expediente
 
+        return view('expedientes.edit_estado',[
+            'expediente' => $expediente,
+            'comprobantes' => $comprobantes
+        ],
+        compact('expediente'));
+    }
+
+    public function updateEstado(Request $request, $id)
+    {
+        $request->validate([
+            'estado' => 'required|string|in:REC,REEF,RC,RSEC',
+            'fecha_notificacion' => 'required|date',
+        ]);
+
+        $expediente = Expediente::findOrFail($id);
+        $expediente->estado = $request->estado;
+        $expediente->fecha_notificacion = $request->fecha_notificacion;
+        $expediente->save();
+
+        return redirect()->route('expedientes.index')->with('success', 'Estado del expediente actualizado con éxito');
+    }
 
     public function destroy($id)
     {
@@ -145,41 +151,12 @@ class ExpedienteController extends Controller
         return redirect()->route('expedientes.index')->with('success', 'Expediente eliminado con éxito');
     }
 
-    public function reportes(Request $request)
+    public function mostrarReportes()
     {
-        // Obtener los filtros del formulario
-        $fecha_desde = $request->input('fecha_desde');
-        $fecha_hasta = $request->input('fecha_hasta');
-        $procedencia = $request->input('procedencia');
-        $infraccion = $request->input('infraccion');
-        $comprobante = $request->input('comprobante');
-
-        // Construir la consulta
-        $query = Expediente::query();
-
-        if ($fecha_desde) {
-            $query->where('fecha_notificacion', '>=', $fecha_desde);
-        }
-        if ($fecha_hasta) {
-            $query->where('fecha_notificacion', '<=', $fecha_hasta);
-        }
-        if ($procedencia) {
-            $query->where('procedencia', 'like', "%$procedencia%");
-        }
-        if ($infraccion) {
-            $query->where('infraccion', 'like', "%$infraccion%");
-        }
-        if ($comprobante) {
-            $query->whereHas('comprobantes', function ($q) use ($comprobante) {
-                $q->where('numero_comprobante', 'like', "%$comprobante%");
-            });
-        }
-
-        // Obtener los resultados
-        $expedientes = $query->get();
-
-        // Retornar la vista con los resultados
-        return view('expedientes.reportes', compact('expedientes'));
+        return view('expedientes.reposmen');
     }
 
+    
+    
+    
 }

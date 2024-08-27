@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('concepto_pagos', function (Blueprint $table) {
-            $table->id();
+        Schema::create('comprobantes', function (Blueprint $table) {
+            $table->id('ID_comprobante');
+            $table->foreignId('ID_expediente')->constrained('expedientes', 'ID_expediente');
+            $table->string('numero_recibo')->unique();
+            $table->date('fecha');
+            $table->decimal('total', 8, 2);
             $table->timestamps();
         });
     }
@@ -22,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('concepto_pagos');
+        Schema::dropIfExists('comprobantes');
     }
 };

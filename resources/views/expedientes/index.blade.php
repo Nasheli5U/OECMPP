@@ -41,13 +41,14 @@
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                    <th scope="col" class="px-6 py-3">Número</th>
-                    <th scope="col" class="px-6 py-3">Nombres</th>
+                    <th scope="col" class="px-6 py-3">Número de Expediente</th>
+                    <th scope="col" class="px-6 py-3">Nombre Completo</th>
                     <th scope="col" class="px-6 py-3">DNI/RUC</th>
+                    <th scope="col" class="px-6 py-3">Domicilio Fiscal</th>
                     <th scope="col" class="px-6 py-3">Dirección del Predio</th>
                     <th scope="col" class="px-6 py-3">Procedencia</th>
                     <th scope="col" class="px-6 py-3">Fecha de Notificación</th>
-                    <th scope="col" class="px-6 py-3">Infracción</th>
+                    <th scope="col" class="px-6 py-3">Código Infracción</th>
                     <th scope="col" class="px-6 py-3">Monto</th>
                     <th scope="col" class="px-6 py-3">Estado</th>
                     <th scope="col" class="px-6 py-3">Acciones</th>
@@ -56,27 +57,28 @@
             <tbody>
                 @foreach ($expedientes as $expediente)
                 <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                    <td class="px-6 py-4">{{ $expediente->numero_expediente }}</td>
-                    <td class="px-6 py-4">{{ $expediente->nombres_deudor }}</td>
-                    <td class="px-6 py-4">{{ $expediente->dni_ruc }}</td>
+                    <td class="px-6 py-4">{{ $expediente->numero }}</td>
+                    <td class="px-6 py-4">{{ $expediente->persona->nombre }} {{ $expediente->persona->apellido }}</td>
+                    <td class="px-6 py-4">{{ $expediente->persona->DNI ?? $expediente->persona->RUC }}</td>
+                    <td class="px-6 py-4">{{ $expediente->persona->domicilio_fiscal }}</td>
                     <td class="px-6 py-4">{{ $expediente->direccion_predio }}</td>
-                    <td class="px-6 py-4">{{ $expediente->procedencia }}</td>
+                    <td class="px-6 py-4">{{ $expediente->procedencia->nombre }}</td>
                     <td class="px-6 py-4">{{ $expediente->fecha_notificacion }}</td>
-                    <td class="px-6 py-4">{{ $expediente->infraccion }}</td>
-                    <td class="px-6 py-4">{{ $expediente->monto_adeudado }}</td>
+                    <td class="px-6 py-4">{{ $expediente->infraccion->codigo }}</td>
+                    <td class="px-6 py-4">{{ $expediente->infraccion->monto }}</td>
                     <td class="px-6 py-4">{{ $expediente->estado }}</td>
                     <td class="px-6 py-4 flex space-x-2">
                         <!-- Botones de acción -->
-                        <a href="{{ route('expedientes.edit', $expediente->id) }}" class="btn-editar">
+                        <a href="{{ route('expedientes.edit', $expediente->ID_expediente) }}" class="btn-editar">
                             Editar Datos
                         </a>
-                        <a href="{{ route('expedientes.edit_estado', $expediente->id) }}" class="btn-editar">
+                        <a href="{{ route('expedientes.edit_estado', $expediente->ID_expediente) }}" class="btn-editar">
                             Editar Estado
                         </a>
-                        <form action="{{ route('expedientes.destroy', $expediente->id) }}" method="POST">
+                        <form action="{{ route('expedientes.destroy', $expediente->ID_expediente) }}" method="POST">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn-eliminar">
+                            <button type="submit" class="btn-eliminar" onclick="return confirm('¿Estás seguro de eliminar este expediente?')">
                                 Eliminar
                             </button>
                         </form>
@@ -87,8 +89,4 @@
         </table>
     </div>
 </div>
-
-
-
-
 @endsection

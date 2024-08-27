@@ -5,16 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ConceptoPago extends Model
+class Pago extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'comprobante_id', 'concepto', 'costo'
-    ];
+    protected $table = 'pagos';
+    protected $primaryKey = 'ID_pago';
 
-    public function comprobante()
-    {
-        return $this->belongsTo(ComprobanteDePago::class);
-    }
+    protected $fillable = [
+        'procedimiento', 'monto'
+    ];
+    
 }

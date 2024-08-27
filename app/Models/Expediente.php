@@ -6,13 +6,41 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Expediente extends Model
+
 {
     use HasFactory;
 
+    protected $table = 'expedientes';
+    protected $primaryKey = 'ID_expediente';
+
     protected $fillable = [
-        'numero_expediente', 'nombres_deudor', 'apellidos_deudor', 'dni_ruc', 'domicilio_deudor', 
-        'direccion_predio', 'procedencia', 'fecha_notificacion', 'infraccion', 'estado', 
-        'monto_adeudado', 'medida_complementaria', 'archivo_rec', 'archivo_reef', 
-        'archivo_rc', 'archivo_rsec', 'archivo_hoja_coordinacion', 'archivo_informe'
+        'numero', 'ID_persona', 'direccion_predio', 'ID_procedencia',
+        'fecha_entrada', 'fecha_notificacion', 'ID_infraccion', 'estado', 'medida_complementaria'
     ];
+
+    public function persona()
+    {
+        return $this->belongsTo(Persona::class, 'ID_persona');
+    }
+
+    public function procedencia()
+    {
+        return $this->belongsTo(Procedencia::class, 'ID_procedencia');
+    }
+
+    public function infraccion()
+    {
+        return $this->belongsTo(Infraccion::class, 'ID_infraccion');
+    }
+
+    public function archivos()
+    {
+        return $this->hasMany(Archivo::class, 'ID_expediente');
+    }
+
+    public function comprobantes()
+    {
+        return $this->hasMany(Comprobante::class, 'ID_expediente');
+    }
 }
+
